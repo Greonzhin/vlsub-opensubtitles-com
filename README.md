@@ -74,7 +74,9 @@ yay -S vlsub-opensubtitles-com-git
    - **macOS**: `~/Library/Application Support/org.videolan.vlc/lua/extensions/`
    - **Linux**: `~/.local/share/vlc/lua/extensions/`
 3. **Restart** VLC Media Player
-4. **Access** via `View → VLSub OpenSubtitles.com`
+4. **Access** the extension:
+   - **Windows/Linux**: `View → VLSub OpenSubtitles.com`
+   - **macOS**: `VLC → Extensions → VLSub OpenSubtitles.com` (macOS puts Lua extensions under the **VLC** menu, not **View**)
 
 ## 📋 Requirements
 
@@ -86,7 +88,7 @@ yay -S vlsub-opensubtitles-com-git
 ## 🎬 Usage
 
 ### Quick Start
-1. **Setup**: Open VLC → View → VLSub OpenSubtitles.com → Config
+1. **Setup**: Open the extension (`View → VLSub OpenSubtitles.com` on Windows/Linux, `VLC → Extensions → VLSub OpenSubtitles.com` on macOS) → Config
 2. **Login**: Enter your OpenSubtitles.com username and password
 3. **Play**: Start your video file
 4. **Search**: Click "🎯 Search by Hash" for exact matches or "🔍 Search by Name"
