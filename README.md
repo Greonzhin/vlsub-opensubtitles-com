@@ -166,6 +166,17 @@ Full list available in the [language documentation](docs/languages.md).
 - Check file is in correct extensions directory
 - Verify VLC version 3.0+
 
+**"Incompatible dkjson version" (Ubuntu / Debian)**
+
+Ubuntu and Debian ship VLC with an old bundled `dkjson.luac` that cannot parse floats. Upgrading VLC does not fix it — the broken file is part of the distro package (see [#23](https://github.com/opensubtitles/vlsub-opensubtitles-com/issues/23)).
+
+Fix:
+1. Download the latest `dkjson.lua` from [dkolf.de/dkjson-lua](https://dkolf.de/dkjson-lua/).
+2. Locate VLC's Lua modules directory — typically `/usr/lib/x86_64-linux-gnu/vlc/lua/modules/` (Ubuntu/Debian) or `/usr/lib/vlc/lua/modules/`.
+3. Back up the existing file: `sudo cp dkjson.luac dkjson.luac.bak`
+4. Replace it with the downloaded file (renamed to `dkjson.luac`): `sudo cp ~/Downloads/dkjson.lua /usr/lib/x86_64-linux-gnu/vlc/lua/modules/dkjson.luac`
+5. Restart VLC.
+
 ### Debug Mode
 Enable debug logging in VLC:
 ```

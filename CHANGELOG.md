@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.8] - 2026-06-09
+
+### Fixed
+- **Incompatible dkjson dialog**: error dialog now includes Ubuntu/Debian-specific workaround. Distro-bundled VLC ships an old `dkjson.luac` that VLC upgrades do not fix; dialog now explains how to replace it with the latest version from dkolf.de ([#23](https://github.com/opensubtitles/vlsub-opensubtitles-com/issues/23)).
+
+### Documentation
+- README troubleshooting now covers the Ubuntu/Debian dkjson fix with full step-by-step instructions.
+
 ### Planned
 - Package manager support (Homebrew, apt, etc.)
 - Subtitle preview before download
