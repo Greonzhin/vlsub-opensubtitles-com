@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.9] - 2026-06-09
+
+### Fixed
+- **Network share / UNC path handling** ([#32](https://github.com/opensubtitles/vlsub-opensubtitles-com/issues/32)): subtitles for media on Windows network shares (`\\server\share\...`) and SMB/CIFS/NFS protocols now save next to the video file instead of falling back to the Downloads folder. The hostname is preserved from `file://server/share/path` URIs and reconstructed as `//server/share/path` before path resolution.
+
 ## [1.2.8] - 2026-06-09
 
 ### Fixed

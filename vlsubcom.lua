@@ -3419,6 +3419,24 @@ getFileInfo = function()
 
     -- Corrections
 
+    -- Windows UNC / SMB share: file://host/share/path → //host/share/path
+    -- Preserves hostname so save-with-video works on network drives (#32).
+    -- Forward slashes used throughout this file; Windows accepts //server/share
+    -- as an alias for \\server\share in io.open.
+    local uri_host = parsed_uri["host"]
+    if uri_host and uri_host ~= "" and uri_host ~= "localhost"
+    and (file.protocol == "file" or file.protocol == "smb"
+      or file.protocol == "cifs" or file.protocol == "nfs") then
+      local path_for_host = file.path or ""
+      if path_for_host:sub(1, 1) ~= "/" then
+        path_for_host = "/" .. path_for_host
+      end
+      file.path = "//" .. uri_host .. path_for_host
+      if openSub.option.debugLogging then
+        vlc.msg.dbg("[VLSub] UNC/network path reconstructed: " .. file.path)
+      end
+    end
+
     -- For windows
     file.path = string.match(file.path, "^/(%a:/.+)$") or file.path
 
