@@ -1871,27 +1871,34 @@ function interface_config()
   input_table['dir_path'] = dlg:add_text_input(
     openSub.conf.dirPath, 2, 9, 2, 1)
 
-  -- Row 10: Status message (moved up from row 11)
-  input_table['message'] = nil
-  input_table['message'] = dlg:add_label('', 1, 10, 4, 1)
+  -- Row 10: TMDB API key (optional — used to resolve a precise IMDb ID
+  -- via TMDB before falling back to OpenSubtitles' own name search)
+  dlg:add_label("TMDB API key (optional):", 1, 10, 2, 1)
+  input_table['tmdb_api_key'] = dlg:add_text_input(
+    type(openSub.option.tmdb_api_key) == "string"
+    and openSub.option.tmdb_api_key or "", 3, 10, 2, 1)
 
-  -- Row 11: Action buttons (moved up from row 12)
+  -- Row 11: Status message (was row 10)
+  input_table['message'] = nil
+  input_table['message'] = dlg:add_label('', 1, 11, 4, 1)
+
+  -- Row 12: Action buttons (was row 11)
   dlg:add_button(
     "💾 " .. lang["int_save"],
-    apply_config, 1, 11, 1, 1)
+    apply_config, 1, 12, 1, 1)
 
   dlg:add_button(
     "❓ " .. lang["int_help"],
     function() show_help("config") end,
-    2, 11, 1, 1)
+    2, 12, 1, 1)
 
   dlg:add_button(
     "🔄 Check Updates",
-    function() check_for_updates(true) end, 3, 11, 1, 1)
+    function() check_for_updates(true) end, 3, 12, 1, 1)
 
   dlg:add_button(
     "❌ " .. lang["int_close"],
-    show_main, 4, 11, 1, 1)
+    show_main, 4, 12, 1, 1)
 
   -- Setup dropdown values for existing dropdowns
   input_table['langExt']:add_value(
@@ -2879,10 +2886,12 @@ function apply_config()
   -- Get username and password, trim whitespace
   local username = trim(input_table['os_username']:get_text() or "")
   local password = trim(input_table['os_password']:get_text() or "")
+  local tmdb_api_key = trim(input_table['tmdb_api_key']:get_text() or "")
 
   -- Set the trimmed values
   openSub.option.os_username = username
   openSub.option.os_password = password
+  openSub.option.tmdb_api_key = tmdb_api_key
 
   -- Save boolean options (these should always be saved regardless of login status)
   if input_table["langExt"]:get_value() == 2 then
