@@ -3542,6 +3542,83 @@ end
   collectgarbage()
 end,
 
+-- Resolve a precise IMDb ID via TMDB (search + external_ids) from the
+-- title/year/season/episode getMovieInfo() already extracted. Returns an
+-- IMDb ID string (e.g. "tt19815566") on success, or nil on ANY failure:
+-- no key configured, network error, no TMDB search match, or no imdb_id
+-- in the external_ids response. Never throws — every branch returns nil
+-- instead of raising, so a failure here can never break the existing
+-- name-search fallback in getMovieInfo()'s caller.
+function resolveImdbIdViaTMDB(title, year, season, episode)
+  local key = openSub.option.tmdb_api_key
+  if not key or trim(key) == "" then
+    return nil
+  end
+  if not title or trim(title) == "" then
+    return nil
+  end
+
+  local client = Curl.new()
+  client:set_timeout(10)
+  client:set_retries(1)
+
+  local has_episode = season and episode
+    and tostring(season) ~= "" and tostring(episode) ~= ""
+  local has_year = year and tostring(year) ~= ""
+
+  local search_url, media_kind
+  if has_episode then
+    media_kind = "tv"
+    search_url = "https://api.themoviedb.org/3/search/tv?query="
+      .. vlc.strings.encode_uri_component(title) .. "&api_key=" .. key
+  elseif has_year then
+    media_kind = "movie"
+    search_url = "https://api.themoviedb.org/3/search/movie?query="
+      .. vlc.strings.encode_uri_component(title) .. "&year=" .. tostring(year)
+      .. "&api_key=" .. key
+  else
+    return nil
+  end
+
+  local res = client:get(search_url)
+  if not res or res.status ~= 200 or not res.body or res.body == "" then
+    vlc.msg.dbg("[VLSub] TMDB search failed or returned no data")
+    return nil
+  end
+
+  local ok, data = pcall(json.decode, res.body, 1, true)
+  if not ok or not data or not data.results or not data.results[1]
+    or not data.results[1].id then
+    vlc.msg.dbg("[VLSub] TMDB search returned no usable result")
+    return nil
+  end
+  local tmdb_id = data.results[1].id
+
+  local ext_url
+  if media_kind == "tv" then
+    ext_url = "https://api.themoviedb.org/3/tv/" .. tostring(tmdb_id)
+      .. "/season/" .. tostring(season) .. "/episode/" .. tostring(episode)
+      .. "/external_ids?api_key=" .. key
+  else
+    ext_url = "https://api.themoviedb.org/3/movie/" .. tostring(tmdb_id)
+      .. "/external_ids?api_key=" .. key
+  end
+
+  local ext_res = client:get(ext_url)
+  if not ext_res or ext_res.status ~= 200 or not ext_res.body or ext_res.body == "" then
+    vlc.msg.dbg("[VLSub] TMDB external_ids lookup failed")
+    return nil
+  end
+
+  local ok2, ext_data = pcall(json.decode, ext_res.body, 1, true)
+  if not ok2 or not ext_data or not ext_data.imdb_id or ext_data.imdb_id == "" then
+    vlc.msg.dbg("[VLSub] TMDB external_ids had no imdb_id")
+    return nil
+  end
+
+  vlc.msg.dbg("[VLSub] TMDB resolved IMDb ID: " .. ext_data.imdb_id)
+  return ext_data.imdb_id
+end
 
 -- Modify the getMovieInfo function to populate the year field
 getMovieInfo = function()
@@ -3646,6 +3723,16 @@ getMovieInfo = function()
                 ", Year: " .. (openSub.movie.year or "none") ..
                 ", Season: " .. (openSub.movie.seasonNumber or "none") ..
                 ", Episode: " .. (openSub.movie.episodeNumber or "none"))
+  end
+
+  if (not openSub.movie.imdbId or openSub.movie.imdbId == "")
+    and openSub.option.tmdb_api_key and trim(openSub.option.tmdb_api_key) ~= "" then
+    local resolved = resolveImdbIdViaTMDB(
+      openSub.movie.title, openSub.movie.year,
+      openSub.movie.seasonNumber, openSub.movie.episodeNumber)
+    if resolved then
+      openSub.movie.imdbId = resolved:gsub("^tt", "")
+    end
   end
 
   collectgarbage()
