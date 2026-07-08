@@ -2003,8 +2003,15 @@ function show_main()
       -- Brief delay
     end
 
-    -- Automatically trigger hash search (which includes name search fallback)
-    searchHash()
+    -- If getMovieInfo auto-resolved a precise IMDb ID (via TMDB), search by it
+    -- directly. Hash search ignores the IMDb ID and, when the hash misses,
+    -- falls back to an ambiguous name search (e.g. "From" -> wrong show). Only
+    -- when no IMDb ID was resolved do we use the usual hash+name search.
+    if openSub.movie.imdbId and openSub.movie.imdbId ~= "" then
+      searchIMBD_v2()
+    else
+      searchHash()
+    end
   end
 end
 
