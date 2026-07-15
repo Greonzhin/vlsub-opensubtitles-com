@@ -1793,6 +1793,9 @@ function interface_main()
     "🔗 Link", open_subtitle_link, 2, 11, 1, 1)
 
   dlg:add_button(
+    "🔄 Refresh", refresh_media_info, 3, 11, 1, 1)
+
+  dlg:add_button(
     "⚙️ Config", show_conf, 5, 11, 1, 1)
   dlg:add_button(
     "❓ Help",
@@ -3846,6 +3849,31 @@ end,
 }
 
 -- Enhanced searchHash function with all-languages fallback for name search fallback
+-- Re-fetch media info for the currently playing file (title/season/episode/
+-- year + the TMDB-resolved IMDb ID) and update the dialog fields, so the user
+-- can pull fresh info after switching to a new episode/video without reopening
+-- the extension. Standalone top-level function (NOT a table field).
+function refresh_media_info()
+  openSub.getFileInfo()
+  openSub.getMovieInfo()
+
+  if input_table['title'] then
+    input_table['title']:set_text(openSub.movie.title or "")
+  end
+  if input_table['seasonNumber'] then
+    input_table['seasonNumber']:set_text(tostring(openSub.movie.seasonNumber or ""))
+  end
+  if input_table['episodeNumber'] then
+    input_table['episodeNumber']:set_text(tostring(openSub.movie.episodeNumber or ""))
+  end
+  if input_table['year'] then
+    input_table['year']:set_text(tostring(openSub.movie.year or ""))
+  end
+  if input_table['imdbId'] then
+    input_table['imdbId']:set_text(openSub.movie.imdbId or "")
+  end
+end
+
 function searchHash()
   openSub.lastSearchMethod = "hash" -- Track that this started as a hash search
 
