@@ -1796,6 +1796,9 @@ function interface_main()
     "🔄 Refresh", refresh_media_info, 3, 11, 1, 1)
 
   dlg:add_button(
+    "🎬 ffsubsync", sync_with_ffsubsync, 4, 11, 1, 1)
+
+  dlg:add_button(
     "⚙️ Config", show_conf, 5, 11, 1, 1)
   dlg:add_button(
     "❓ Help",
@@ -3854,6 +3857,10 @@ end,
 -- can pull fresh info after switching to a new episode/video without reopening
 -- the extension. Standalone top-level function (NOT a table field).
 function refresh_media_info()
+  -- Clear the stale IMDb ID first so getMovieInfo re-resolves it via TMDB for
+  -- the new media — its resolver only runs when openSub.movie.imdbId is empty,
+  -- so without this the previous episode's ID would stick on refresh.
+  openSub.movie.imdbId = ""
   openSub.getFileInfo()
   openSub.getMovieInfo()
 
@@ -3872,6 +3879,33 @@ function refresh_media_info()
   if input_table['imdbId'] then
     input_table['imdbId']:set_text(openSub.movie.imdbId or "")
   end
+end
+
+-- Download the selected subtitle, then launch the ffsubsync GUI with the
+-- playing video + the just-downloaded subtitle pre-filled, so the user can
+-- sync them in one click. Personal setup: paths are hardcoded like
+-- ffsubsync-launcher.lua. Standalone top-level function (NOT a table field).
+function sync_with_ffsubsync()
+  openSub.file.lastDownloadedSubtitlePath = nil
+  download_subtitles_v2()
+
+  local video = openSub.file.path
+  local subtitle = openSub.file.lastDownloadedSubtitlePath
+
+  if not video or video == "" then
+    setMessage(error_tag("No video is playing — ffsubsync needs a reference video."))
+    return
+  end
+  if not subtitle or subtitle == "" then
+    setMessage(error_tag("Subtitle download failed — nothing to sync with ffsubsync."))
+    return
+  end
+
+  local pythonw = "C:\\Projeler\\Vlc\\.venv\\Scripts\\pythonw.exe"
+  local gui = "C:\\Projeler\\Vlc\\ffsubsync_gui.py"
+  os.execute('start "" "'..pythonw..'" "'..gui..
+    '" --video "'..video..'" --subtitle "'..subtitle..'"')
+  setMessage(success_tag("Opening ffsubsync GUI..."))
 end
 
 function searchHash()
@@ -5875,6 +5909,7 @@ openSub.saveAndLoadSubtitle = function(subtitle_content, item)
   subfile:close()
 
   vlc.msg.dbg("[VLSub] Subtitle file saved successfully")
+  openSub.file.lastDownloadedSubtitlePath = target
 
   -- Try to load subtitles into VLC if video is playing
   local subtitle_loaded = false
